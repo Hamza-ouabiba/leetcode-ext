@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LeetCode Push Activity</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img class="brand-mark" src="icons/icon48.png" alt="">
+      <div><h1>LeetCode Sync</h1><p id="repo">Connecting to GitHub…</p></div>
+      <button id="settings" class="settings-button" type="button" aria-label="Open settings" title="Settings">⚙</button>
+    </header>
+    <section class="summary" aria-label="Repository summary">
+      <div class="count" id="count">—</div>
+      <div><strong>problems in repository</strong><span id="subtitle">Current contents on GitHub</span></div>
+    </section>
+    <section class="sync-card" aria-live="polite">
+      <div class="section-heading"><h2>Last sync</h2><button id="retry" type="button" hidden>Retry upload</button></div>
+      <p id="sync-message" class="sync-message">No uploads yet.</p>
+      <span id="sync-time" class="sync-time"></span>
+    </section>
+    <section class="stats">
+      <div class="stat"><span>Languages</span><strong id="languages">—</strong></div>
+      <div class="stat"><span>Latest problem update</span><strong id="latest">—</strong></div>
+    </section>
+    <section class="activity">
+      <div class="section-heading"><h2>Problems in repository</h2><button id="refresh" type="button">Refresh</button></div>
+      <p id="empty" class="empty">Loading repository contents…</p>
+      <ul id="items" aria-live="polite"></ul>
+    </section>
+    <footer>Repository view is read live from GitHub.</footer>
+  </main>
+  <script src="github.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

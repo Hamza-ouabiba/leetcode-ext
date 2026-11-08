@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LeetCode Sync Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icons/icon48.png" alt="">
+      <div><h1>GitHub connection</h1><p>Choose where accepted LeetCode solutions are saved.</p></div>
+    </header>
+    <form id="settings-form">
+      <label>GitHub owner<input id="owner" name="owner" autocomplete="username" required placeholder="your-username"></label>
+      <label>Repository<input id="repository" name="repository" required placeholder="your-repository"></label>
+      <label>Personal access token<input id="token" name="token" type="password" autocomplete="new-password" placeholder="Leave blank to keep the saved token"></label>
+      <p class="hint">The token is stored locally in this browser. Grant it Contents read and write access to this repository.</p>
+      <div class="actions">
+        <button class="primary" type="submit">Save settings</button>
+        <button id="test" type="button">Test connection</button>
+        <button id="clear-token" type="button" class="quiet">Remove saved token</button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+  <script src="github.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

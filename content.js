@@ -1,9 +1,6 @@
-const problem = {};
-
 const getProblemInfo = () => {
   const titleEl = document.querySelector(".text-title-large a");
   const descEl = document.querySelector('[data-track-load="description_content"]');
-
   return {
     title: titleEl?.innerText?.trim() || "Unknown Title",
     description: descEl?.innerText?.trim() || "No description"
@@ -12,154 +9,96 @@ const getProblemInfo = () => {
 
 const getLanguage = () => {
   const langEl = document.querySelector('.flex.h-full.flex-nowrap.items-center button[aria-haspopup="dialog"]');
-  return langEl?.textContent?.trim()?.toLowerCase() || "unknown";
+  return langEl?.textContent?.trim() || "unknown";
 };
 
-const getLanguageSuffix = (language) => {
-  const map = {
-    "c++": "cpp",
-    "java": "java",
-    "python3": "py",
-    "python": "py",
-    "javascript": "js",
-    "typescript": "ts",
-    "c#": "cs",
-    "c": "c",
-    "go": "go",
-    "kotlin": "kt",
-    "swift": "swift",
-    "rust": "rs",
-    "ruby": "rb",
-    "php": "php",
-    "dart": "dart",
-    "scala": "scala",
-    "elixir": "ex",
-    "erlang": "erl",
-    "racket": "rkt"
-  };
-  return map[language.toLowerCase()] || "txt";
-};
+const getLanguageSuffix = language => ({
+  "c++": "cpp", java: "java", python3: "py", python: "py", javascript: "js", typescript: "ts",
+  "c#": "cs", c: "c", go: "go", kotlin: "kt", swift: "swift", rust: "rs", ruby: "rb",
+  php: "php", dart: "dart", scala: "scala", elixir: "ex", erlang: "erl", racket: "rkt"
+}[language.trim().toLowerCase()] || "txt");
 
-const getCodeBlock = () => {
-  const codeBlock = [...document.querySelectorAll("code")]
-    .find(code =>
-      code.querySelector(".react-syntax-highlighter-line-number") &&
-      [...code.classList].some(c => c.startsWith("language-"))
-    );
-
-  if (!codeBlock) return null;
-
+const getCode = () => {
+  const codeBlock = [...document.querySelectorAll("code")].find(code =>
+    code.querySelector(".react-syntax-highlighter-line-number") &&
+    [...code.classList].some(className => className.startsWith("language-"))
+  );
+  if (!codeBlock) return "";
   const clone = codeBlock.cloneNode(true);
-  clone
-    .querySelectorAll(".react-syntax-highlighter-line-number")
-    .forEach(el => el.remove());
-
+  clone.querySelectorAll(".react-syntax-highlighter-line-number").forEach(element => element.remove());
   return clone.textContent?.trim() || "";
 };
 
-const getFolderName = () => {
-  const problemInfo = getProblemInfo();
-  const match = problemInfo.title?.match(/^(\d+)\.\s+([\w\s-]+)/);
-  if (match) {
-    const number = match[1];
-    const slug = match[2].toLowerCase().replace(/\s+/g, "-");
-    return `${number}-${slug}`;
-  }
-
-  const urlMatch = window.location.pathname.match(/\/problems\/([\w-]+)\//);
-  if (urlMatch) return urlMatch[1];
-
-  return "unknown-problem";
+const getFolderName = title => {
+  const titleMatch = title.match(/^(\d+)\.\s+([\w\s-]+)/);
+  if (titleMatch) return `${titleMatch[1]}-${titleMatch[2].trim().toLowerCase().replace(/\s+/g, "-")}`;
+  return window.location.pathname.match(/\/problems\/([\w-]+)\//)?.[1] || "unknown-problem";
 };
 
-const writeReadme = () => {
-  if (!problem || !problem.description) return "";
+const getReadme = ({ title, description }) => `# ${title}\n\n${description}`;
 
-  const title = problem.title || "Problem";
-  const description = problem.description;
+const isAccepted = text => /^accepted\b/i.test(text.trim());
+const isFinishedFailure = text => /^(wrong answer|time limit exceeded|memory limit exceeded|runtime error|compile error|output limit exceeded|internal error)\b/i.test(text.trim());
 
-  return `# ${title} 
-  
-  ${description}`.trim();
-};
-
-const pushToGithub = async (folderName, filename, content, commitMsg, retries = 3) => {
-  if (!folderName || !filename || !content) return;
-
-  const path = `${folderName}/${filename}`;
-  const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${path}`;
-
-  try {
-    let sha = null;
-    const res = await fetch(apiUrl, { headers: { Authorization: `token ${GITHUB_TOKEN}` } });
-    if (res.ok) {
-      const data = await res.json();
-      sha = data.sha;
-      console.log(`File ${path} exists, will update it`);
-    } else if (res.status !== 404) {
-      console.error(`GitHub check file failed: ${res.status} ${res.statusText}`);
-      if (retries > 0) return pushToGithub(folderName, filename, content, commitMsg, retries - 1);
-      return;
-    }
-
-    const body = {
-      message: commitMsg,
-      content: btoa(unescape(encodeURIComponent(content))),
-      sha: sha || undefined
-    };
-
-    const pushRes = await fetch(apiUrl, {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (pushRes.ok) alert(`✅ Successfully pushed ${path}`);
-    else {
-      console.error(`❌ GitHub push failed: ${pushRes.status} ${pushRes.statusText}`);
-      if (retries > 0) return pushToGithub(folderName, filename, content, commitMsg, retries - 1);
-    }
-  } catch (err) {
-    console.error("GitHub push error:", err);
-    if (retries > 0) return pushToGithub(folderName, filename, content, commitMsg, retries - 1);
-  }
-};
-
-const submitButtonClick = () => {
-  const button = document.querySelector('[data-e2e-locator="console-submit-button"]');
-  if (!button) return;
-
+const monitorSubmission = button => {
+  let timer = null;
   let interval = null;
 
   button.addEventListener("click", () => {
     if (interval) return;
+    const resultEl = document.querySelector('[data-e2e-locator="submission-result"]');
+    const previousResult = resultEl?.innerText?.trim() || "";
+    let sawResultChange = false;
 
     interval = setInterval(async () => {
-      const resultEl = document.querySelector('[data-e2e-locator="submission-result"]');
-      if (resultEl) {
-        clearInterval(interval);
-        interval = null;
+      const current = document.querySelector('[data-e2e-locator="submission-result"]')?.innerText?.trim() || "";
+      if (current !== previousResult) sawResultChange = true;
+      if (!sawResultChange || (!isAccepted(current) && !isFinishedFailure(current))) return;
 
-        const problemInfo = getProblemInfo();
-        const code = getCodeBlock();
-        problem.code = code;
-        problem.title = problemInfo.title;
-        problem.description = problemInfo.description;
+      clearInterval(interval);
+      clearTimeout(timer);
+      interval = null;
 
-        const folderName = getFolderName();
-        const language = getLanguage();
-        const filename = `solution.${getLanguageSuffix(language)}`;
-        const commitMsg = `Solve ${problem.title}`;
-        const readMe = writeReadme();
-        const readMeFile = `Readme.md`;
-        await pushToGithub(folderName, readMeFile, readMe, 'Readme file');
-        await pushToGithub(folderName, filename, code, commitMsg);
+      if (!isAccepted(current)) {
+        await window.LeetCodeGitHub.setSyncStatus({
+          status: "rejected",
+          title: getProblemInfo().title,
+          message: `Not uploaded: LeetCode result was “${current.split("\n")[0]}”.`
+        });
+        return;
       }
-    }, 100);
+
+      const { title, description } = getProblemInfo();
+      const language = getLanguage();
+      const code = getCode();
+      if (!code) {
+        await window.LeetCodeGitHub.setSyncStatus({ status: "error", title, message: "Accepted, but the solution code could not be read." });
+        return;
+      }
+
+      const payload = {
+        title,
+        folderName: getFolderName(title),
+        language,
+        solutionFile: `solution.${getLanguageSuffix(language)}`,
+        readmeContent: getReadme({ title, description }),
+        code
+      };
+      await window.LeetCodeGitHub.syncProblem(payload);
+    }, 250);
+
+    timer = setTimeout(async () => {
+      if (!interval) return;
+      clearInterval(interval);
+      interval = null;
+      await window.LeetCodeGitHub.setSyncStatus({
+        status: "error",
+        title: getProblemInfo().title,
+        message: "Timed out waiting for LeetCode’s submission result."
+      });
+    }, 120000);
   });
 };
 
-submitButtonClick();
+const submitButton = document.querySelector('[data-e2e-locator="console-submit-button"]');
+if (submitButton) monitorSubmission(submitButton);

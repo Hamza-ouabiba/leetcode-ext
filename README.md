@@ -1,55 +1,27 @@
-# Leetcode Extension
+# LeetCode GitHub Sync
 
-A **LeetCode extension** that automatically pushes solved problem code (and a generated README) to your GitHub repository.
+A browser extension that saves accepted LeetCode solutions and problem descriptions to a GitHub repository.
 
-This extension extracts the problem title, description, and your solution code from the LeetCode page and pushes them to a GitHub repo in a structured folder format.
+## Features
 
----
+- Uploads only after LeetCode reports **Accepted**.
+- Saves `Readme.md` and a language-specific `solution.*` file in a folder for the problem.
+- Shows repository problem folders, solution language counts, and the latest problem-folder commit in the toolbar popup.
+- Links each problem folder directly to GitHub.
+- Shows the last upload result and keeps a failed upload available for retry.
+- Stores GitHub settings in the browser instead of a credential source file.
 
-## 🚀 Features
+## Install
 
-- Reads the problem title and description from the LeetCode UI
-- Extracts your solution code after submission
-- Creates a folder named after the problem (e.g., `1-two-sum`)
-- Generates a basic `README.md` with the problem title & description
-- Pushes both solution and README to your GitHub repository automatically
+1. Open `chrome://extensions` or `edge://extensions`.
+2. Enable **Developer mode**.
+3. Choose **Load unpacked** and select this project folder.
+4. Open the extension’s **Settings** page from the toolbar popup.
+5. Enter the GitHub owner, repository, and a personal access token.
+6. Choose **Test connection**, then **Save settings**.
 
----
+Create a fine-grained token with **Contents: Read and write** access to the selected repository. The token is stored in this browser’s extension storage and is not included in the extension files.
 
-## 📦 Installation
+## Security note
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Hamza-ouabiba/leetcode-ext.git
-cd leetcode-ext
-```
-
-### ⚙️ Add the extension to your browser
-
-**For Chrome / Edge:**
-
-1. Go to `chrome://extensions/`
-2. Enable **Developer Mode** (top right corner)
-3. Click **Load unpacked**
-4. Select the project folder you cloned
-
----
-
-## 🔐 Configuration (IMPORTANT)
-
-### 3. Create `cred.js`
-
-Create a file named:
-
-```
-cred.js
-```
-
-### 4. Add your credentials
-
-```js
-const GITHUB_USERNAME = "your-username";
-const GITHUB_REPO = "your-repo-name";
-const GITHUB_TOKEN = "your-personal-access-token";
-```
+An earlier version used a token in `cred.js`. That file has been removed from the extension. If that token was real, revoke it in GitHub and enter a replacement token in the Settings page. Removing the file does not remove it from previous Git history.
